@@ -12,6 +12,8 @@ use crate::lox::*;
 
 mod lox;
 mod scanner;
+mod token;
+mod tokentype;
 
 pub fn init() {
     let args: Vec<String> = env::args().collect();
@@ -50,6 +52,7 @@ pub fn init() {
         // io::stdout().write(&bytes);
         // println!("Text in provided file:\n{contents}");
     } else {
-        Lox::run_prompt(); //interactive lox CLI
+        let mut lox = Lox::new();
+        Lox::run_prompt(&mut lox); //interactive lox CLI
     }
 }

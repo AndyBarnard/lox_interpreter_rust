@@ -42,20 +42,23 @@ impl Lox {
         }
     }
 
-    pub fn run_prompt() {
+    pub fn run_prompt(&mut self) {
         let mut buffer = String::new();
+        // let f = File::open(); need a stream to get the line?
+        // let mut reader = BufReader::new();
 
         loop {
-            println!("> ");
+            print!("> ");
             let line = stdin().read_line(&mut buffer).unwrap(); //buffer contains the value of the line, and line is just the line num
             // if line == null { break; }
             Self::run(&buffer);
+            self.had_error = false;
         }
     }
 
     pub fn run(source: &str) {
         let scanner = Scanner::new(&source);
-        let tokens = vec![scanner.scan_tokens()];
+        let tokens = scanner.scan_tokens();
 
         for token in &tokens {
             println!("{}", token);
@@ -63,7 +66,7 @@ impl Lox {
     }
 
     fn error(&mut self, line: u32, message: &str) {
-        Self::report(self, line, "", message);
+        self.report(line, "", message);
     }
 
     fn report(&mut self, line: u32, location: &str, message: &str) {
