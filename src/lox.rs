@@ -1,0 +1,73 @@
+use std::env;
+use std::fs;
+use std::fs::File;
+use std::io;
+use std::io::prelude::*;
+use std::io::stdin;
+use std::io::BufReader;
+use std::process;
+
+use crate::scanner::*;
+
+pub struct Lox {
+    pub had_error: bool,
+}
+
+impl Lox {
+    pub fn new() -> Self {
+        Self { had_error: false }
+    }
+
+    pub fn run_file(&self, file_path: &str) {
+        let file = File::open(&file_path).unwrap_or_else(|err| {
+            eprintln!("{err}");
+            process::exit(1);
+        });
+
+        let file_str = fs::read_to_string(&file_path).unwrap_or_else(|err| {
+            eprintln!("{err}");
+            process::exit(1);
+        });
+
+        let reader = BufReader::new(&file);
+
+        for line in reader.lines() {
+            println!("here's a line: {}", line.expect("error in run_file"));
+        }
+
+        Lox::run(&file_str);
+
+        if self.had_error {
+            process::exit(1);
+        }
+    }
+
+    pub fn run_prompt() {
+        let mut buffer = String::new();
+
+        loop {
+            println!("> ");
+            let line = stdin().read_line(&mut buffer).unwrap(); //buffer contains the value of the line, and line is just the line num
+            // if line == null { break; }
+            Self::run(&buffer);
+        }
+    }
+
+    pub fn run(source: &str) {
+        let scanner = Scanner::new(&source);
+        let tokens = vec![scanner.scan_tokens()];
+
+        for token in &tokens {
+            println!("{}", token);
+        }
+    }
+
+    fn error(&mut self, line: u32, message: &str) {
+        Self::report(self, line, "", message);
+    }
+
+    fn report(&mut self, line: u32, location: &str, message: &str) {
+        eprintln!("[line {line}] Error {location}: message");
+        self.had_error = true;
+    }
+}
