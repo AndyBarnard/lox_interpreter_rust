@@ -11,7 +11,7 @@ pub struct Scanner<'a> {
     current: u32,
     line: u32,
     lox: Lox,
-    keywords: HashMap<&'a str, TokenType> 
+    keywords: HashMap<&'a str, TokenType>,
 }
 
 //TODO: fix indexing
@@ -28,7 +28,7 @@ impl<'a> Scanner<'a> {
             current: 0,
             line: 1,
             lox: Lox::new(),
-            keywords
+            keywords,
         }
     }
 
