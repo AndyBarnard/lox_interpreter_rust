@@ -1,14 +1,15 @@
-use std::env;
 use std::fs;
 use std::fs::File;
-use std::io;
 use std::io::prelude::*;
 use std::io::stdin;
 use std::io::BufReader;
 use std::process;
+// use std::io;
+// use std::env;
 
 use crate::scanner::*;
 
+#[derive(Debug)]
 pub struct Lox {
     pub had_error: bool,
 }
@@ -50,7 +51,7 @@ impl Lox {
         loop {
             print!("> ");
             let line = stdin().read_line(&mut buffer).unwrap(); //buffer contains the value of the line, and line is just the line num
-            // if line == null { break; }
+                                                                // if line == null { break; }
             Self::run(&buffer);
             self.had_error = false;
         }
@@ -61,11 +62,11 @@ impl Lox {
         let tokens = scanner.scan_tokens();
 
         for token in &tokens {
-            println!("{}", token);
+            println!("{:?}", token);
         }
     }
 
-    fn error(&mut self, line: u32, message: &str) {
+    pub fn error(&mut self, line: u32, message: &str) {
         self.report(line, "", message);
     }
 

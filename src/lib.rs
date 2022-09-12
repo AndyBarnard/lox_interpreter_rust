@@ -17,17 +17,17 @@ mod tokentype;
 
 pub fn init() {
     let args: Vec<String> = env::args().collect();
-    // dbg!(&args);
 
     if args.len() > 2 {
         eprintln!("Too many args");
+
         process::exit(1);
     } else if args.len() == 2 {
         let file_path = &args[1];
 
         if let '/' = file_path.chars().next().unwrap() {
             let lox = Lox::new();
-            Lox::run_file(&lox, &file_path);
+            lox.run_file(&file_path);
         } else {
             let mut current_path = env::current_dir().unwrap_or_else(|err| {
                 eprintln!("error getting current_dir with error: {}", err);
@@ -46,13 +46,13 @@ pub fn init() {
                 });
 
             let lox = Lox::new();
-            Lox::run_file(&lox, &absolute_path);
+            lox.run_file(&absolute_path);
         }
         // let bytes = contents.as_bytes();
         // io::stdout().write(&bytes);
         // println!("Text in provided file:\n{contents}");
     } else {
         let mut lox = Lox::new();
-        Lox::run_prompt(&mut lox); //interactive lox CLI
+        lox.run_prompt(); //interactive lox CLI
     }
 }
