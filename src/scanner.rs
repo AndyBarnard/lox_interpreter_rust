@@ -16,6 +16,8 @@ pub struct Scanner<'a> {
 
 //TODO: fix indexing
 
+// TODO: pass correct literals...how are they different from lexemes?
+
 impl<'a> Scanner<'a> {
     pub fn new(source: &'a str) -> Self {
         let mut keywords = HashMap::new();
@@ -52,7 +54,7 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn scan_tokens(mut self) -> Vec<Token<'a>> {
-        while self.is_at_end() {
+        while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
         }
@@ -62,7 +64,7 @@ impl<'a> Scanner<'a> {
 
         self.tokens
     }
-
+    //TODO: should this be self.current + 1? otherwise it's always less than len()? bc 0 index while len >= 1
     fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
     }
@@ -112,22 +114,24 @@ impl<'a> Scanner<'a> {
                 // if we have double '//' then it's a comment, scan the whole line
                 //but don't consume anything.
 
-                //TODO: below there's support for multi line comments. may not work property, not yet tested
+                //TODO: below there's support for multi line comments. seems to loop infintely
 
                 if self.matching('/') {
                     while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
                 } else if self.matching('*') {
-                    while !self.is_at_end() {
+                    // if self.peek() == '\n' {
+                    //     self.line += 1;
+                    // }
+
+                    while (self.peek() != '*' && self.peek_next() != '/') && !self.is_at_end() {
                         self.advance();
-                        if self.matching('*') {
-                            while !self.is_at_end() {
-                                if self.peek_next() == '/' {
-                                    self.advance();
-                                }
-                            }
-                        }
+                    }
+
+                    if self.peek() == '*' && self.peek_next() == '/' {
+                        self.advance();
+                        self.advance();
                     }
                 } else {
                     self.add_token(Box::new(TokenType::Slash), &""[..])
@@ -190,10 +194,7 @@ impl<'a> Scanner<'a> {
             return '\0';
         }
 
-        match self.source.chars().nth(self.current + 1) {
-            Some(next) => return next,
-            None => return '\0',
-        }
+        self.source.as_bytes()[self.current + 1] as char
     }
 
     fn is_alpha(c: char) -> bool {
@@ -248,10 +249,7 @@ impl<'a> Scanner<'a> {
 
     fn advance(&mut self) -> char {
         self.current += 1;
-        self.source
-            .chars()
-            .nth((self.current - 1) as usize)
-            .unwrap()
+        self.source.as_bytes()[self.current - 1] as char
     }
 
     fn add_token(&mut self, token_type: Box<TokenType>, literal: &'a str) {

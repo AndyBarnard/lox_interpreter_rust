@@ -1,5 +1,5 @@
 use std::fs;
-use std::fs::File;
+// use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdin;
 use std::io::BufReader;
@@ -20,23 +20,24 @@ impl Lox {
     }
 
     pub fn run_file(&self, file_path: &str) {
-        let file = File::open(&file_path).unwrap_or_else(|err| {
+        println!("opening file...");
+        // let file = File::open(&file_path).unwrap_or_else(|err| {
+        //     eprintln!("{err}");
+        //     process::exit(1);
+        // });
+
+        let file_source = fs::read_to_string(&file_path).unwrap_or_else(|err| {
             eprintln!("{err}");
             process::exit(1);
         });
 
-        let file_str = fs::read_to_string(&file_path).unwrap_or_else(|err| {
-            eprintln!("{err}");
-            process::exit(1);
-        });
+        // let reader = BufReader::new(&file);
 
-        let reader = BufReader::new(&file);
+        // for line in reader.lines() {
+        //     println!("here's a line: {}", line.expect("error in run_file"));
+        // }
 
-        for line in reader.lines() {
-            println!("here's a line: {}", line.expect("error in run_file"));
-        }
-
-        Lox::run(&file_str);
+        Lox::run(&file_source);
 
         if self.had_error {
             process::exit(1);
@@ -62,7 +63,7 @@ impl Lox {
         let tokens = scanner.scan_tokens();
 
         for token in &tokens {
-            println!("{:?}", token);
+            println!("printing token: {:?}", token);
         }
     }
 

@@ -28,6 +28,7 @@ pub fn init() {
         if let '/' = file_path.chars().next().unwrap() {
             let lox = Lox::new();
             lox.run_file(&file_path);
+            println!("running file...");
         } else {
             let mut current_path = env::current_dir().unwrap_or_else(|err| {
                 eprintln!("error getting current_dir with error: {}", err);
