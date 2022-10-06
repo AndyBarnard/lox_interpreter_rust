@@ -5,14 +5,14 @@ use crate::tokentype::*;
 
 #[derive(Debug)]
 pub struct Token<'a> {
-    pub token_type: TokenType,
+    pub token_type: Box<TokenType>,
     pub lexeme: &'a str,
     pub literal: &'a str,
     pub line: u32,
 }
 
 impl<'a> Token<'a> {
-    pub fn new(token_type: TokenType, lexeme: &str, literal: &str, line: u32) -> Self {
+    pub fn new(token_type: Box<TokenType>, lexeme: &'a str, literal: &'a str, line: u32) -> Self {
         Self {
             token_type,
             lexeme,

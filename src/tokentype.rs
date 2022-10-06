@@ -1,4 +1,8 @@
-#[derive(Debug)]
+use std::ops::Deref;
+
+use crate::token::Token;
+
+#[derive(Debug, Clone, Copy)]
 pub enum TokenType {
     //category A
     LeftParen,
@@ -44,4 +48,12 @@ pub enum TokenType {
     While,
     //category E
     Eof,
+}
+
+impl Deref for TokenType {
+    type Target = TokenType;
+
+    fn deref<'a>(&'a self) -> &'a TokenType {
+        self
+    }
 }

@@ -1,19 +1,19 @@
-use std::env;
-use std::process;
 // use std::fs;
 // use std::fs::File;
 // use std::io;
 // use std::io::prelude::*;
 // use std::io::stdin;
 // use std::io::BufReader;
+use std::env;
+use std::process;
 
-use crate::lox::*;
 // use crate::scanner::*;
+use crate::lox::*;
 
-mod lox;
-mod scanner;
-mod token;
-mod tokentype;
+pub mod lox;
+pub mod scanner;
+pub mod token;
+pub mod tokentype;
 
 pub fn init() {
     let args: Vec<String> = env::args().collect();
@@ -36,12 +36,12 @@ pub fn init() {
 
             current_path.push(file_path);
 
-            //TODO: OsString to String
             let absolute_path = current_path
                 .into_os_string()
                 .into_string()
-                .unwrap_or_else(|err| {
-                    eprintln!("OsString error");
+                .unwrap_or_else(|_| {
+                    eprintln!("Unprintable OsString error");
+
                     process::exit(1);
                 });
 
