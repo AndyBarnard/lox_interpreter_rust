@@ -2,9 +2,8 @@ use std::ops::Deref;
 
 use crate::token::Token;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Copy, Clone)]
 pub enum TokenType {
-    //category A
     LeftParen,
     RightParen,
     LeftBrace,
@@ -16,7 +15,6 @@ pub enum TokenType {
     Semicolon,
     Slash,
     Star,
-    //category B
     Bang,
     BangEqual,
     Equal,
@@ -25,11 +23,9 @@ pub enum TokenType {
     GreaterEqual,
     Less,
     LessEqual,
-    //category C
     Identifier,
     String,
     Number,
-    //category D
     And,
     Class,
     Else,
@@ -46,7 +42,6 @@ pub enum TokenType {
     True,
     Var,
     While,
-    //category E
     Eof,
 }
 

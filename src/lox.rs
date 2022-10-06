@@ -1,13 +1,11 @@
 use std::fs;
-// use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdin;
 use std::io::BufReader;
 use std::process;
-// use std::io;
-// use std::env;
 
 use crate::scanner::*;
+use crate::token::*;
 
 #[derive(Debug)]
 pub struct Lox {
@@ -44,6 +42,7 @@ impl Lox {
         }
     }
 
+    //TODO: fix run_prompt
     pub fn run_prompt(&mut self) {
         let mut buffer = String::new();
         // let f = File::open(); need a stream to get the line?
@@ -63,16 +62,26 @@ impl Lox {
         let tokens = scanner.scan_tokens();
 
         for token in &tokens {
-            println!("printing token: {:?}", token);
+            println!("Printing token: {:?}", token);
         }
     }
 
+    //TODO: maybe have line: Option<u32>?
     pub fn error(&mut self, line: u32, message: &str) {
         self.report(line, "", message);
     }
 
+    //TODO: make report a macro to avoid the messy formatting as in error() below
     fn report(&mut self, line: u32, location: &str, message: &str) {
-        eprintln!("[line {line}] Error {location}: message");
+        eprintln!("[line {line}] Error {location} {message}");
         self.had_error = true;
+    }
+
+    fn error(token: Token, message: &str) {
+        if token.token_type == TokenType.Eof {
+            report(token.line, " at end", message);
+        } else {
+            report(token.line, token.lexeme, message);
+        }
     }
 }

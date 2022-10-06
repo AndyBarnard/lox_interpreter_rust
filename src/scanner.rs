@@ -83,28 +83,28 @@ impl<'a> Scanner<'a> {
             ';' => self.add_token(Box::new(TokenType::Semicolon), &""),
             '*' => self.add_token(Box::new(TokenType::Star), &""),
             '!' => {
-                if self.matching('=') {
+                if self.matches('=') {
                     self.add_token(Box::new(TokenType::BangEqual), &"")
                 } else {
                     self.add_token(Box::new(TokenType::Bang), &"")
                 }
             }
             '=' => {
-                if self.matching('=') {
+                if self.matches('=') {
                     self.add_token(Box::new(TokenType::EqualEqual), &""[..])
                 } else {
                     self.add_token(Box::new(TokenType::Equal), &""[..])
                 }
             }
             '<' => {
-                if self.matching('=') {
+                if self.matches('=') {
                     self.add_token(Box::new(TokenType::LessEqual), &""[..])
                 } else {
                     self.add_token(Box::new(TokenType::Less), &""[..])
                 }
             }
             '>' => {
-                if self.matching('=') {
+                if self.matches('=') {
                     self.add_token(Box::new(TokenType::GreaterEqual), &""[..])
                 } else {
                     self.add_token(Box::new(TokenType::Greater), &""[..])
@@ -116,11 +116,11 @@ impl<'a> Scanner<'a> {
 
                 //TODO: below there's support for multi line comments. seems to loop infintely
 
-                if self.matching('/') {
+                if self.matches('/') {
                     while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
-                } else if self.matching('*') {
+                } else if self.matches('*') {
                     // if self.peek() == '\n' {
                     //     self.line += 1;
                     // }
@@ -223,7 +223,7 @@ impl<'a> Scanner<'a> {
         self.add_token(Box::new(TokenType::String), value);
     }
 
-    fn matching(&mut self, expected: char) -> bool {
+    fn matches(&mut self, expected: char) -> bool {
         if self.is_at_end() {
             return false;
         }

@@ -14,6 +14,7 @@ pub mod lox;
 pub mod scanner;
 pub mod token;
 pub mod tokentype;
+pub mod parser;
 
 pub fn init() {
     let args: Vec<String> = env::args().collect();
