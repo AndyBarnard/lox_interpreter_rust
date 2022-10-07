@@ -6,6 +6,8 @@ use std::process;
 
 use crate::scanner::*;
 use crate::token::*;
+use crate::tokentype::*;
+use crate::parser::*;
 
 #[derive(Debug)]
 pub struct Lox {
@@ -35,7 +37,7 @@ impl Lox {
         //     println!("here's a line: {}", line.expect("error in run_file"));
         // }
 
-        Lox::run(&file_source);
+        self.run(&file_source);
 
         if self.had_error {
             process::exit(1);
@@ -52,24 +54,34 @@ impl Lox {
             print!("> ");
             let line = stdin().read_line(&mut buffer).unwrap(); //buffer contains the value of the line, and line is just the line num
                                                                 // if line == null { break; }
-            Self::run(&buffer);
+            self.run(&buffer);
             self.had_error = false;
         }
     }
 
-    pub fn run(source: &str) {
+    pub fn run(&self, source: &str) {
         let scanner = Scanner::new(&source);
         let tokens = scanner.scan_tokens();
 
-        for token in &tokens {
-            println!("Printing token: {:?}", token);
+        //code to print scanned tokens, commented out bc not necessary
+        // for token in &tokens {
+        //     println!("Printing token: {:?}", token);
+        // }
+
+        let parser = Parser::new(tokens);
+        let expression = parser.parse();
+
+        if self.had_error {
+            return;
         }
+
+        println!("Here he inits the AstPrinter with expression: {}", expression);
     }
 
     //TODO: maybe have line: Option<u32>?
-    pub fn error(&mut self, line: u32, message: &str) {
-        self.report(line, "", message);
-    }
+    // pub fn error(&mut self, line: u32, message: &str) {
+    //     self.report(line, "", message);
+    // }
 
     //TODO: make report a macro to avoid the messy formatting as in error() below
     fn report(&mut self, line: u32, location: &str, message: &str) {
@@ -77,11 +89,11 @@ impl Lox {
         self.had_error = true;
     }
 
-    fn error(token: Token, message: &str) {
-        if token.token_type == TokenType.Eof {
-            report(token.line, " at end", message);
+    pub fn error(&self, token: Token, line: u32, message: &str) {
+        if *token.token_type == TokenType::Eof {
+            self.report(token.line, " at end", message);
         } else {
-            report(token.line, token.lexeme, message);
+            self.report(token.line, line, message);
         }
     }
 }

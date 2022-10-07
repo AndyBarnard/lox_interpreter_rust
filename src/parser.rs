@@ -2,20 +2,31 @@ use anyhow::Result;
 
 use crate::lox::*;
 use crate::token::*;
+use crate::scanner::*;
 use crate::tokentype::*;
 
-struct Parser {
-    tokens: Vec<Token>,
+pub struct Parser<'a> {
+    tokens: Vec<Token<'a>>,
     current: usize,
 }
 
-impl Parser {
+//TODO: define Expr
+//figure out how to get equivalent to his inheritance/polymorphism with sub-Expr expressions (Grouping, etc)
+
+impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, current: 0 }
     }
 
-    fn expression() -> Expr {
-        equality()
+    pub fn parse(&self) -> Expr {
+        match self.expression() {
+            Ok(res) => res,
+            Err(e) => e,
+        }
+    }
+
+    fn expression(&self) -> Result<Expr> {
+        self.equality()
     }
 
     /*
@@ -25,95 +36,98 @@ impl Parser {
     expr ((!= | ==) expr)*
     */
 
-    fn equality() -> Expr {
+    fn equality(&self) -> Expr {
         let expr = Expr::new();
 
-        while matches(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
-            let operator = previous();
-            let right = comparison();
+        while self.matching(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
+            let operator = self.previous();
+            let right = self.comparison();
             expr = Binary::new(expr, operator, right); //TODO: i'm changing type of expr
         }
 
         expr
     }
 
-    fn comparison() -> Expr {
-        let expr = term();
+    fn comparison(&self) -> Expr {
+        let expr = self.term();
 
-        while matches(
+        while self.matching(
             TokenType::Greater,
             TokenType::GreaterEqual,
             TokenType::Less,
             TokenType::LessEqual,
         ) {
-            let operator = previous();
-            let right = term();
+            let operator = self.previous();
+            let right = self.term();
             expr = Binary::new(expr, operator, right);
         }
 
         expr
     }
 
-    fn term() -> Expr {
-        let expr = factor();
+    fn term(&self) -> Expr {
+        let expr = self.factor();
 
-        while matches(TokenType::Minus, TokenType::Plus) {
-            let operator = previous();
-            let right = factor();
+        while self.matching(TokenType::Minus, TokenType::Plus) {
+            let operator = self.previous();
+            let right = self.factor();
             expr = Binary::new(expr, operator, right);
         }
 
         expr
     }
 
-    fn factor() -> Expr {
-        let expr = unary();
+    fn factor(&self) -> Expr {
+        let expr = self.unary();
 
-        while matches(TokenType::Slash, TokenType::Star) {
-            let operator = previous();
-            let right = unary();
+        while self.matching(TokenType::Slash, TokenType::Star) {
+            let operator = self.previous();
+            let right = self.unary();
             expr = Binary::new(expr, operator, right);
         }
     }
 
-    fn unary() -> Expr {
-        if matches(TokenType::Bang, TokenType::Minus) {
-            let operator = previous();
-            let right = unary();
+    fn unary(&self) -> Expr {
+        if self.matching(TokenType::Bang, TokenType::Minus) {
+            let operator = self.previous();
+            let right = self.unary();
             return Unary::new(operator, right);
         }
 
-        primary()
+        self.primary()
     }
 
-    fn primary() -> Expr {
-        if mathes(TokenType::False) {
+    //TODO: should return result?
+    fn primary(&self) -> Expr {
+        if self.matching(TokenType::False) {
             return Literal::new(false);
         }
-        if matches(TokenType::True) {
+        if self.matching(TokenType::True) {
             return Literal::new(true);
         }
-        if matches(TokenType::Nil) {
+        if self.matching(TokenType::Nil) {
             return Literal::new("null"); //here he passes null...use Option<T> and pass None?
         }
-        if matches(TokenType::Number, TokenType::String) {
-            return Literal::new(previous().literal);
+        if self.matching(TokenType::Number, TokenType::String) {
+            return Literal::new(self.previous().literal);
         }
-        if matches(TokenType::LeftParen) {
-            let expr = expression();
+        if self.matching(TokenType::LeftParen) {
+            let expr = self.expression();
             //TODO: so consume must return Option<T> based on my implementation
             expect(
-                consume(TokenType::RightParen),
+                self.consume(TokenType::RightParen),
                 "Expected ')' after expression",
             );
             return Grouping::new(expr);
         }
+
+        self.error(self.peek(), "Expect expression.");
     }
 
-    fn matches(token_types: Vec<TokenType>) -> bool {
+    fn matching(&self, token_types: Vec<TokenType>) -> bool {
         for token_type in token_types {
-            if check(token_type) {
-                advance();
+            if self.check(token_type) {
+                self.advance();
                 return true;
             }
         }
@@ -121,46 +135,46 @@ impl Parser {
         false
     }
 
-    fn consume(token_type: TokenType, message: String) -> Result<Token> {
-        if check(token_type) {
-            return Some(advance());
+    fn consume(&self, token_type: TokenType, message: String) -> Result<Token<'a>> {
+        if self.check(token_type) {
+            return Ok(self.advance());
         }
 
-        //return anyhow error 
+        //return anyhow error
         //TODO: see how to return errors with anyhow
         //his code:
         //throw error(peek(), message);
     }
 
-    fn check(token_type: TokenType) -> bool {
-        if is_at_end() {
+    fn check(&self, token_type: TokenType) -> bool {
+        if self.is_at_end() {
             return false;
         }
 
-        peek().token_type == token_type
+        self.peek().token_type == token_type
     }
 
-    fn advance() -> Token {
-        if !is_at_end() {
-            current += 1;
+    fn advance(&self) -> Token<'a> {
+        if !self.is_at_end() {
+            self.current += 1;
         }
 
-        previous()
+        self.previous()
     }
 
-    fn is_at_end() -> bool {
-        peek().token_type == TokenType::Eof
+    fn is_at_end(&self) -> bool {
+        self.peek().token_type == TokenType::Eof
     }
 
-    fn peek() -> Token {
-        tokens.get(current)
+    fn peek(&self) -> Token<'a> {
+        self.tokens.get(self.current)
     }
 
-    fn previous() -> Token {
-        tokens.get(current - 1)
+    fn previous(&self) -> Token<'a> {
+        self.tokens.get(self.current - 1)
     }
 
-    fn error(token: Token, message: &str) -> ParseError {
+    fn error(&self, token: Token, message: &str) -> ParseError {
         //TODO: I just picked a random line number.
         //his code:
         //Lox.error(token, message);
@@ -168,10 +182,35 @@ impl Parser {
 
         ParseError::new()
     }
+
+    fn synchronize(&self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().token_type == TokenType::Semicolon {
+                return;
+            }
+
+            match self.peek().token_type {
+                TokenType::Return => return,
+                // TokenType::Class => (),
+                // TokenType::Fun => (),
+                // TokenType::Var => (),
+                // TokenType::For => (),
+                // TokenType::If => (),
+                // TokenType::While => (),
+                // TokenType::Print => (),
+                _ => (),
+            }
+
+            self.advance();
+        }
+    }
 }
 
 // struct Binary;
-// struct Expr;
+// #[derive()]
+struct Expr;
 
 // impl Binary {
 //     fn new() -> Expr {

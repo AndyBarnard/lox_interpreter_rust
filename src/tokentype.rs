@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use crate::token::Token;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TokenType {
     LeftParen,
     RightParen,
