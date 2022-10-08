@@ -1,7 +1,5 @@
 use std::fs;
-use std::io::prelude::*;
 use std::io::stdin;
-use std::io::BufReader;
 use std::process;
 
 use crate::scanner::*;
@@ -75,7 +73,7 @@ impl Lox {
             return;
         }
 
-        println!("Here he inits the AstPrinter with expression: {}", expression);
+        // println!("Here he inits the AstPrinter with expression: {}", expression);
     }
 
     //TODO: maybe have line: Option<u32>?
@@ -89,11 +87,11 @@ impl Lox {
         self.had_error = true;
     }
 
-    pub fn error(&self, token: Token, line: u32, message: &str) {
+    pub fn error(&self, token: &Token, message: &str) {
         if *token.token_type == TokenType::Eof {
             self.report(token.line, " at end", message);
         } else {
-            self.report(token.line, line, message);
+            self.report(token.line, "", message);
         }
     }
 }

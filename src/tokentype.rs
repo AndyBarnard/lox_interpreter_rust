@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::token::Token;
+// use crate::token::Token;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TokenType {

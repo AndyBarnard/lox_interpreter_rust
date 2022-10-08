@@ -1,8 +1,8 @@
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 
+use crate::expr::*;
 use crate::lox::*;
 use crate::token::*;
-use crate::scanner::*;
 use crate::tokentype::*;
 
 pub struct Parser<'a> {
@@ -10,122 +10,126 @@ pub struct Parser<'a> {
     current: usize,
 }
 
-//TODO: define Expr
-//figure out how to get equivalent to his inheritance/polymorphism with sub-Expr expressions (Grouping, etc)
-
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&self) -> Expr {
-        match self.expression() {
-            Ok(res) => res,
-            Err(e) => e,
-        }
+    pub fn parse(&self) -> Result<Expr> {
+        self.expression()
     }
 
     fn expression(&self) -> Result<Expr> {
         self.equality()
     }
 
-    /*
-    TODO: find out what data structure to represent the Expr that I return.
-    below for equality(), it's the following rule:
-
-    expr ((!= | ==) expr)*
-    */
-
-    fn equality(&self) -> Expr {
-        let expr = Expr::new();
+    fn equality(&self) -> Result<Expr> {
+        let expr = self.comparison()?;
 
         while self.matching(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
-            let operator = self.previous();
-            let right = self.comparison();
-            expr = Binary::new(expr, operator, right); //TODO: i'm changing type of expr
+            let new_expr = self.previous().and_then(|operator| {
+                let right = self.comparison()?;
+                expr = Expr::Binary(Box::new(expr), Operator::from(operator), Box::new(right));
+                return Ok(expr);
+            })?;
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn comparison(&self) -> Expr {
-        let expr = self.term();
+    fn comparison(&self) -> Result<Expr> {
+        let expr = self.term()?;
 
-        while self.matching(
+        while self.matching(vec![
             TokenType::Greater,
             TokenType::GreaterEqual,
             TokenType::Less,
             TokenType::LessEqual,
-        ) {
-            let operator = self.previous();
-            let right = self.term();
-            expr = Binary::new(expr, operator, right);
+        ]) {
+            let new_expr = self.previous().and_then(|operator| {
+                let right = self.term()?;
+                expr = Expr::Binary(Box::new(expr), Operator::from(operator), Box::new(right));
+                return Ok(expr);
+            })?;
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn term(&self) -> Expr {
-        let expr = self.factor();
+    fn term(&self) -> Result<Expr> {
+        let expr = self.factor()?;
 
-        while self.matching(TokenType::Minus, TokenType::Plus) {
-            let operator = self.previous();
-            let right = self.factor();
-            expr = Binary::new(expr, operator, right);
+        while self.matching(vec![TokenType::Minus, TokenType::Plus]) {
+            let new_expr = self.previous().and_then(|operator| {
+                let right = self.factor()?;
+                expr = Expr::Binary(Box::new(expr), Operator::from(operator), Box::new(right));
+                return Ok(expr);
+            });
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn factor(&self) -> Expr {
-        let expr = self.unary();
+    fn factor(&self) -> Result<Expr> {
+        let expr = self.unary()?;
 
-        while self.matching(TokenType::Slash, TokenType::Star) {
-            let operator = self.previous();
-            let right = self.unary();
-            expr = Binary::new(expr, operator, right);
+        while self.matching(vec![TokenType::Slash, TokenType::Star]) {
+            let new_expr = self.previous().and_then(|operator| {
+                let right = self.unary()?;
+                expr = Expr::Binary(Box::new(expr), Operator::from(operator), Box::new(right));
+                return Ok(expr);
+            })?;
         }
+
+        Ok(expr)
     }
 
-    fn unary(&self) -> Expr {
-        if self.matching(TokenType::Bang, TokenType::Minus) {
-            let operator = self.previous();
-            let right = self.unary();
-            return Unary::new(operator, right);
+    fn unary(&self) -> Result<Expr> {
+        if self.matching(vec![TokenType::Bang, TokenType::Minus]) {
+            let new_expr = self.previous().and_then(|operator| {
+                let right = self.unary()?;
+                let expr = Expr::Unary(Operator::from(operator), Box::new(right));
+                return Ok(expr);
+            })?;
         }
 
         self.primary()
     }
 
-    //TODO: should return result?
-    fn primary(&self) -> Expr {
-        if self.matching(TokenType::False) {
-            return Literal::new(false);
+    fn primary(&self) -> Result<Expr> {
+        if self.matching(vec![TokenType::False]) {
+            return Ok(Expr::Literal(Box::new(Literal::False)));
         }
-        if self.matching(TokenType::True) {
-            return Literal::new(true);
+        if self.matching(vec![TokenType::True]) {
+            return Ok(Expr::Literal(Box::new(Literal::True)));
         }
-        if self.matching(TokenType::Nil) {
-            return Literal::new("null"); //here he passes null...use Option<T> and pass None?
+        if self.matching(vec![TokenType::Nil]) {
+            return Ok(Expr::Literal(Box::new(Literal::Nil)));
         }
-        if self.matching(TokenType::Number, TokenType::String) {
-            return Literal::new(self.previous().literal);
+        if self.matching(vec![TokenType::Number, TokenType::String]) {
+            // match self.previous() {
+            //     //TODO: here i'm passing token.literal which is a string but I need to convert to Literal type
+            //     Some(token) => return Expr::Literal(Box::new(Literal::from(token.literal))),
+            //     None => eprint!("Error calling self.previous() in primary()"),
+            // }
+            let lit = self.previous()?.literal;
+            return Ok(Expr::Literal(Box::new(Literal::from(lit))));
         }
-        if self.matching(TokenType::LeftParen) {
-            let expr = self.expression();
+        if self.matching(vec![TokenType::LeftParen]) {
+            let expr = self.expression()?;
             //TODO: so consume must return Option<T> based on my implementation
-            expect(
-                self.consume(TokenType::RightParen),
-                "Expected ')' after expression",
-            );
-            return Grouping::new(expr);
+            // expect(
+            //     self.consume(&TokenType::RightParen),
+            //     "Expected ')' after expression",
+            // );
+            return Ok(Expr::Grouping(Box::new(expr)));
         }
 
-        self.error(self.peek(), "Expect expression.");
+        // self.error(self.peek(), "Expect expression.");
     }
 
     fn matching(&self, token_types: Vec<TokenType>) -> bool {
-        for token_type in token_types {
+        for token_type in &token_types {
             if self.check(token_type) {
                 self.advance();
                 return true;
@@ -135,9 +139,11 @@ impl<'a> Parser<'a> {
         false
     }
 
-    fn consume(&self, token_type: TokenType, message: String) -> Result<Token<'a>> {
+    fn consume(&self, token_type: &TokenType, message: String) -> Result<&Token<'a>> {
         if self.check(token_type) {
-            return Ok(self.advance());
+            return Ok(self.advance()?);
+        } else {
+            return Err(anyhow!("Error in consume()"));
         }
 
         //return anyhow error
@@ -146,74 +152,88 @@ impl<'a> Parser<'a> {
         //throw error(peek(), message);
     }
 
-    fn check(&self, token_type: TokenType) -> bool {
+    fn check(&self, token_type: &TokenType) -> bool {
         if self.is_at_end() {
             return false;
         }
 
-        self.peek().token_type == token_type
+        match self.peek() {
+            Ok(token) => **token.token_type == *token_type,
+            Err(_) => false,
+        }
+        // self.peek().unwrap_or_else(|| return false);
+        // **self.peek()?.token_type == *token_type
     }
 
-    fn advance(&self) -> Token<'a> {
+    fn advance(&self) -> Result<&Token<'a>> {
         if !self.is_at_end() {
             self.current += 1;
         }
 
+        // match self.previous() {
+        //     Some(token) => token,
+        //     None => eprint!("Error calling self.previous() in advance()"),
+        // }
         self.previous()
     }
 
     fn is_at_end(&self) -> bool {
-        self.peek().token_type == TokenType::Eof
+        match self.peek() {
+            Ok(token) => **token.token_type == TokenType::Eof,
+            Err(_) => false,
+        }
     }
 
-    fn peek(&self) -> Token<'a> {
-        self.tokens.get(self.current)
+    fn peek(&self) -> Result<&Token<'a>> {
+        self.tokens
+            .get(self.current)
+            .context("Error in call to peek()")
     }
 
-    fn previous(&self) -> Token<'a> {
-        self.tokens.get(self.current - 1)
+    fn previous(&self) -> Result<&Token<'a>> {
+        self.tokens
+            .get(self.current - 1)
+            .context("Error in call to previous()")
     }
 
     fn error(&self, token: Token, message: &str) -> ParseError {
         //TODO: I just picked a random line number.
-        //his code:
-        //Lox.error(token, message);
-        Lox::error(token, 0, message);
+        let lox = Lox::new();
+        lox.error(&token, message);
 
         ParseError::new()
     }
 
-    fn synchronize(&self) {
-        self.advance();
+    //TODO: coming back to this fn later, it's not absolutely necessary.
+    //it synchronizes error output
+    // fn synchronize(&self) -> Result<&Token<'a>> {
+    //     let token = self.advance()?;
 
-        while !self.is_at_end() {
-            if self.previous().token_type == TokenType::Semicolon {
-                return;
-            }
+    //     while !self.is_at_end() {
+    //         // match self.previous() {
+    //         //     Some(token) => {
+    //         //         if *token.token_type == TokenType::Semicolon {
+    //         //             return;
+    //         //         }
+    //         //     }
+    //         //     None => (),
+    //         // }
+    //         if *self.previous()?.token_type == TokenType::Semicolon {
+    //             return;
+    //         }
 
-            match self.peek().token_type {
-                TokenType::Return => return,
-                // TokenType::Class => (),
-                // TokenType::Fun => (),
-                // TokenType::Var => (),
-                // TokenType::For => (),
-                // TokenType::If => (),
-                // TokenType::While => (),
-                // TokenType::Print => (),
-                _ => (),
-            }
+    //         // match self.peek() {
+    //         //     Some(token) => match *token.token_type {
+    //         //         TokenType::Return => return,
+    //         //         _ => (),
+    //         //     },
+    //         //     None => eprint!("Error calling self.peek() in synchronize()"),
+    //         // }
+    //         if *self.peek()?.token_type == TokenType::Return {
+    //             return;
+    //         }
 
-            self.advance();
-        }
-    }
+    //         self.advance();
+    //     }
+    // }
 }
-
-// struct Binary;
-// #[derive()]
-struct Expr;
-
-// impl Binary {
-//     fn new() -> Expr {
-//         Expr
-//     }
-// }

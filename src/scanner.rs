@@ -213,8 +213,9 @@ impl<'a> Scanner<'a> {
             self.advance();
         }
 
+        //TODO: pass token, here I'm passing self.line as token. WRONG
         if self.is_at_end() {
-            self.lox.error(self.line, "unterminated string");
+            // self.lox.error(self.advance(), "unterminated string");
         }
 
         self.advance();
