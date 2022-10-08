@@ -50,7 +50,7 @@ impl Lox {
 
         loop {
             print!("> ");
-            let line = stdin().read_line(&mut buffer).unwrap(); //buffer contains the value of the line, and line is just the line num
+            // let line = stdin().read_line(&mut buffer).unwrap(); //buffer contains the value of the line, and line is just the line num
                                                                 // if line == null { break; }
             self.run(&buffer);
             self.had_error = false;
@@ -66,7 +66,7 @@ impl Lox {
         //     println!("Printing token: {:?}", token);
         // }
 
-        let parser = Parser::new(tokens);
+        let mut parser = Parser::new(tokens);
         let expression = parser.parse();
 
         if self.had_error {
@@ -87,7 +87,7 @@ impl Lox {
         self.had_error = true;
     }
 
-    pub fn error(&self, token: &Token, message: &str) {
+    pub fn error(&mut self, token: &Token, message: &str) {
         if *token.token_type == TokenType::Eof {
             self.report(token.line, " at end", message);
         } else {

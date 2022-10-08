@@ -151,7 +151,8 @@ impl<'a> Scanner<'a> {
                 } else if Self::is_alpha(c) {
                     self.identifier();
                 } else {
-                    self.lox.error(self.line, &"Unexpected character"[..]);
+                    // self.lox.error(self.line, &"Unexpected character"[..]);
+                    eprintln!("Unexpected character in scan_token()");
                 }
             }
         }

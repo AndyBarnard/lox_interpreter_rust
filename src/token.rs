@@ -3,7 +3,7 @@ use crate::tokentype::*;
 
 // use display;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token<'a> {
     pub token_type: Box<TokenType>,
     pub lexeme: &'a str,

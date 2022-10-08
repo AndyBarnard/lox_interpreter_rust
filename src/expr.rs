@@ -15,33 +15,35 @@ use crate::tokentype::*;
 //w.r.t. recursive descent?
 //I think the only alternative to that is having all the fields on Expr as Options which might be worse
 
-pub enum Expr<'a> {
+pub enum Expr {
     Equality(),
     Comparison(),
     Term(),
     Factor(),
-    Binary(Box<Expr<'a>>, Operator, Box<Expr<'a>>),
-    Unary(Operator, Box<Expr<'a>>),
+    Binary(Box<Expr>, Operator, Box<Expr>),
+    Unary(Operator, Box<Expr>),
     // Literal(Box<Expr>),
-    Literal(Box<Literal<'a>>),
-    Grouping(Box<Expr<'a>>),
+    Literal(Box<Literal>),
+    Grouping(Box<Expr>),
 }
 
-pub enum Literal<'a> {
+pub enum Literal {
     Number(usize),
-    String(&'a str),
+    String(String),
     True,
     False,
     Nil,
-    Expr(Expr<'a>),
+    Expr(Expr),
 }
 
-impl From<&str> for Literal<'_> {
+//TODO: this parses everything as a Number, obviously wrong, just getting it to build now
+//  bc I'm still not sure how to structure this with literals
+impl From<&str> for Literal {
     fn from(s: &str) -> Self {
-        match &s.to_lowercase() {
-            "number" => Literal::Number(1),
-            "string" => Literal::String("abc"),
-
+        match s.to_lowercase() {
+            // "number" => Literal::Number(1),
+            // "string" => Literal::String("abc"),
+            _ => Literal::Number(1),
         }
     }
 }
@@ -57,6 +59,7 @@ pub enum Operator {
     GreaterEqual,
     Less,
     LessEqual,
+    Invalid, //TODO: this is a placeholder for invalid conversion in the from() fn. will remove later
 }
 
 impl From<&Token<'_>> for Operator {
@@ -72,12 +75,12 @@ impl From<&Token<'_>> for Operator {
             TokenType::GreaterEqual => Operator::GreaterEqual,
             TokenType::Less => Operator::Less,
             TokenType::LessEqual => Operator::LessEqual,
-            _ => eprintln!("Error converting from &Token to Operator"),
+            _ => Operator::Invalid,
         }
     }
 }
 
-impl Expr<'_> {
+// impl Expr<'_> {
     // pub fn new(left: Expr, operator: Token, right: Expr) -> Self {
     //     Self {
     //         left: Box::new(left),
@@ -85,7 +88,7 @@ impl Expr<'_> {
     //         right: Box::new(right),
     //     }
     // }
-}
+// }
 
 // trait Binary {
 //     fn binary(&self) -> Expr;
