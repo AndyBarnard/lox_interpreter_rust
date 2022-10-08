@@ -2,10 +2,10 @@ use std::fs;
 use std::io::stdin;
 use std::process;
 
+use crate::parser::*;
 use crate::scanner::*;
 use crate::token::*;
 use crate::tokentype::*;
-use crate::parser::*;
 
 #[derive(Debug)]
 pub struct Lox {
@@ -51,7 +51,7 @@ impl Lox {
         loop {
             print!("> ");
             // let line = stdin().read_line(&mut buffer).unwrap(); //buffer contains the value of the line, and line is just the line num
-                                                                // if line == null { break; }
+            // if line == null { break; }
             self.run(&buffer);
             self.had_error = false;
         }

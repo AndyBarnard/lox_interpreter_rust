@@ -174,7 +174,7 @@ impl<'a> Parser<'a> {
         } else {
             return Err(anyhow!("{message}"));
         }
-//error(peek(), message)
+        //error(peek(), message)
     }
 
     fn check(&self, token_type: &TokenType) -> bool {

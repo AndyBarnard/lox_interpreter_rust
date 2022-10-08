@@ -10,12 +10,12 @@ use std::process;
 // use crate::scanner::*;
 use crate::lox::*;
 
+pub mod expr;
 pub mod lox;
+pub mod parser;
 pub mod scanner;
 pub mod token;
 pub mod tokentype;
-pub mod parser;
-pub mod expr;
 
 pub fn init() {
     let args: Vec<String> = env::args().collect();

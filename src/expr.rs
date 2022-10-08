@@ -81,13 +81,13 @@ impl From<&Token<'_>> for Operator {
 }
 
 // impl Expr<'_> {
-    // pub fn new(left: Expr, operator: Token, right: Expr) -> Self {
-    //     Self {
-    //         left: Box::new(left),
-    //         operator,
-    //         right: Box::new(right),
-    //     }
-    // }
+// pub fn new(left: Expr, operator: Token, right: Expr) -> Self {
+//     Self {
+//         left: Box::new(left),
+//         operator,
+//         right: Box::new(right),
+//     }
+// }
 // }
 
 // trait Binary {
