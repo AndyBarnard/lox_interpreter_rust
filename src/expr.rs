@@ -14,41 +14,33 @@ use crate::tokentype::*;
 //that allows for polymorphism but how does that affect the recursive structure of our parser
 //w.r.t. recursive descent?
 //I think the only alternative to that is having all the fields on Expr as Options which might be worse
-// pub struct Expr {
-//     left: Box<Expr>,
-//     operator: Token,
-//     right: Box<Expr>,
-// }
 
-//TODO: some of the fields on Expr may be enums (Literal, etc.), some not
-
-pub enum Expr {
+pub enum Expr<'a> {
     Equality(),
     Comparison(),
     Term(),
     Factor(),
-    Binary(Box<Expr>, Operator, Box<Expr>),
-    Unary(Operator, Box<Expr>),
+    Binary(Box<Expr<'a>>, Operator, Box<Expr<'a>>),
+    Unary(Operator, Box<Expr<'a>>),
     // Literal(Box<Expr>),
-    Literal(Box<Literal>),
-    Grouping(Box<Expr>),
+    Literal(Box<Literal<'a>>),
+    Grouping(Box<Expr<'a>>),
 }
-//TODO: should Literal be an enum? then what about the actual literal value?
 
-pub enum Literal {
+pub enum Literal<'a> {
     Number(usize),
-    String(String),
+    String(&'a str),
     True,
     False,
     Nil,
-    Expr(Expr),
+    Expr(Expr<'a>),
 }
 
-impl From<&str> for Literal {
+impl From<&str> for Literal<'_> {
     fn from(s: &str) -> Self {
         match &s.to_lowercase() {
-            "number" => Literal::Number,
-            "string" => Literal::String,
+            "number" => Literal::Number(1),
+            "string" => Literal::String("abc"),
 
         }
     }
@@ -85,7 +77,7 @@ impl From<&Token<'_>> for Operator {
     }
 }
 
-impl Expr {
+impl Expr<'_> {
     // pub fn new(left: Expr, operator: Token, right: Expr) -> Self {
     //     Self {
     //         left: Box::new(left),

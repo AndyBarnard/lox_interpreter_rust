@@ -141,14 +141,11 @@ impl<'a> Parser<'a> {
 
     fn consume(&self, token_type: &TokenType, message: String) -> Result<&Token<'a>> {
         if self.check(token_type) {
-            return Ok(self.advance()?);
+            return self.advance();
         } else {
             return Err(anyhow!("Error in consume()"));
         }
 
-        //return anyhow error
-        //TODO: see how to return errors with anyhow
-        //his code:
         //throw error(peek(), message);
     }
 
@@ -161,8 +158,6 @@ impl<'a> Parser<'a> {
             Ok(token) => **token.token_type == *token_type,
             Err(_) => false,
         }
-        // self.peek().unwrap_or_else(|| return false);
-        // **self.peek()?.token_type == *token_type
     }
 
     fn advance(&self) -> Result<&Token<'a>> {
@@ -170,10 +165,6 @@ impl<'a> Parser<'a> {
             self.current += 1;
         }
 
-        // match self.previous() {
-        //     Some(token) => token,
-        //     None => eprint!("Error calling self.previous() in advance()"),
-        // }
         self.previous()
     }
 
