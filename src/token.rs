@@ -1,7 +1,4 @@
-// use crate::scanner;
 use crate::tokentype::*;
-
-// use display;
 
 #[derive(Debug, Clone)]
 pub struct Token<'a> {

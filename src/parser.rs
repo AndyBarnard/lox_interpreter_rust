@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Context, Result};
 
 use crate::expr::*;
-// use crate::lox::*;
 use crate::token::*;
 use crate::tokentype::*;
 
@@ -10,13 +9,6 @@ pub struct Parser<'a> {
     tokens: Vec<Token<'a>>,
     current: usize,
 }
-
-// TODO: use Rc<T> for the multiple mutable reference to self problem in the fns? or Arc? what is Cow?
-//Rc is for multiple read-only, so prob not that
-//must reread chapter 16
-
-//step 1 is see exactly where I'm getting mulitiple mutable references:
-//the matching() fn is mutating self?
 
 impl<'a> Parser<'a> {
     pub fn new(tokens: Vec<Token<'a>>) -> Self {
@@ -31,29 +23,9 @@ impl<'a> Parser<'a> {
         self.equality()
     }
 
-    //TODO: he has declaring expr = comparison() both outside and inside the matching() fn
-    //so they can just point to the same value via pointer
-
-    //TODO: inside I cant return reference to temporary val, i.e. expr inside matching()
-    //so put that into another fn that returns expr, call that fn inside equality(),
-    //then return that val from equality?
-
-    //TODO: one solution to the moving value out of matching() problem is to
-    //pass Expr and not &Expr out of equality
-
-    //TODO: why does this need to be a while loop? cant I just use an if statement with matching()?
-
     fn equality(&mut self) -> Result<Expr> {
         let mut expr = self.clone().comparison()?;
 
-        // while self.matching(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
-        //     let operator = self.clone().previous()?;
-        //     let right = self.clone().comparison()?;
-
-        //     expr = &Expr::Binary(Box::new(expr), Operator::from(operator), Box::new(right));
-
-        //     return Ok(expr);
-        // }
         if self.matching(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
             let right = self.comparison()?;
             let operator = self.previous()?;
@@ -172,9 +144,10 @@ impl<'a> Parser<'a> {
         if self.check(token_type) {
             return self.advance();
         } else {
+            // let peeked = self.peek()?;
+
             return Err(anyhow!("{message}"));
         }
-        //error(peek(), message)
     }
 
     fn check(&self, token_type: &TokenType) -> bool {
@@ -225,7 +198,7 @@ impl<'a> Parser<'a> {
 
     //TODO: coming back to this fn later, it's not absolutely necessary.
     //it synchronizes error output
-    // fn synchronize(&self) -> Result<&Token<'a>> {
+    // fn synchronize(&self) {
     //     let token = self.advance()?;
 
     //     while !self.is_at_end() {
@@ -256,3 +229,5 @@ impl<'a> Parser<'a> {
     //     }
     // }
 }
+
+pub struct ParseError;

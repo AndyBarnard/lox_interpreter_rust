@@ -22,7 +22,6 @@ pub enum Expr {
     Factor(),
     Binary(Box<Expr>, Operator, Box<Expr>),
     Unary(Operator, Box<Expr>),
-    // Literal(Box<Expr>),
     Literal(Box<Literal>),
     Grouping(Box<Expr>),
 }
